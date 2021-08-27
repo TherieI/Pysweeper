@@ -51,7 +51,7 @@ class Grid:
     def get_neighbors_of(self, tile, cardinal_only=True):
         x, y = tile.xy
         # cardinal neighbors only
-        neighbors = list(filter(None.__ne__, [  # None.__ne__ function checking if a value is not None, filtering NoneTyoe (tiles out of bound)
+        neighbors = list(filter(None.__ne__, [  # None.__ne__ function checking if a value is not None, filtering NoneType (tiles out of bound)
             self.get_tile(x - 1, y),
             self.get_tile(x + 1, y),
             self.get_tile(x, y - 1),
@@ -68,15 +68,18 @@ class Grid:
         return neighbors
 
     def clear_area(self, initial_tile):
-        if initial_tile.get_value() != 0:
+        if initial_tile.get_value() != 0:  # to make sure area clearing doesnt run when a number tile is clicked
             initial_tile.cont.CLEARED = True
             return
+        initial_tile.cont.CLEARED = True
         # breadth algorithm to clear an area
         frontier = [initial_tile]
         scanned = set()
         while len(frontier) != 0:
             current = frontier.pop(0)
-            for tile in self.get_neighbors_of(current, cardinal_only=False):  # looping through clear tiles
+            neighbors = self.get_neighbors_of(current, cardinal_only=False)
+            neighbors.append(current)  # necessary to clear area around current tile
+            for tile in neighbors:  # looping through clear tiles
                 if tile.get_value() == 0 and tile not in scanned:
                     for num_tile in self.get_neighbors_of(tile, cardinal_only=False):
                         num_tile.cont.CLEARED = True
@@ -102,6 +105,8 @@ class Grid:
         total_tiles = self.dimensions.x * self.dimensions.y
         tiles_to_mines = int(total_tiles/mines_left)
 
+        count = 0
+
         frontier = [initial_tile]
         scanned = set()
         while len(frontier) != 0:
@@ -112,7 +117,9 @@ class Grid:
                     spawn_chance += 1
                     tile.set_value(-2)
                     if randint(0, tiles_to_mines) == 1 and spawn_chance > 0:
+                        count += 1
                         tile.set_value(-1)
                     frontier.append(tile)
                     scanned.add(tile)
+        print(f"{count=}")
         self.gen_values()

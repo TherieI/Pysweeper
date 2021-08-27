@@ -43,9 +43,6 @@ class Minesweeper:
                     button_clicked = start_button_rect.collidepoint(mouse_pos)
                     if left_click and button_clicked:
                         menu = False
-                    # print(f"right click: {right_click}")
-                    # print(f"left click: {left_click}")
-                    # print(f"Tile clicked: {tile_clicked.position}")
 
             self.screen.blit(self.menu_screen, (0, 0))
             if start_button_rect.collidepoint(mouse_pos) == 1:
@@ -78,18 +75,22 @@ class Minesweeper:
         buttons_clicked = pygame.mouse.get_pressed(5)
         mouse_pos = pygame.mouse.get_pos()
 
-        if buttons_clicked[0]:  # Left mouse button
-            tile_clicked = self.grid.get_clicked(mouse_pos)
-            if not self.grid.running:
-                print("troll")
-                self.grid.running = True
-                self.grid.fill_grid(tile_clicked)
-            if not tile_clicked.cont.FLAGGED:
-                self.grid.clear_area(tile_clicked)
+        tile_clicked = self.grid.get_clicked(mouse_pos)
+        if tile_clicked is None:  # anything that isn't a tile will return None (the border)
+            return
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if buttons_clicked[0]:  # Left mouse button
+                if not self.grid.running:
+                    self.grid.running = True
+                    self.grid.fill_grid(tile_clicked)
+                if not tile_clicked.cont.FLAGGED or not tile_clicked.cont.CLEARED:
+                    self.grid.clear_area(tile_clicked)
 
-        elif buttons_clicked[2]:
-            tile_clicked = self.grid.get_clicked(mouse_pos)
-            print(f"{tile_clicked.xy=} {tile_clicked.get_value()=}")
+            elif buttons_clicked[2]:  # Right mouse button
+                tile_clicked.update_flag_state()
+
+            elif buttons_clicked[1]:  # Middle mouse button
+                print(f"{tile_clicked.xy=} {tile_clicked.get_value()=} {tile_clicked.cont=}")
 
     def complete(self):
         for row in Tile.tiles:

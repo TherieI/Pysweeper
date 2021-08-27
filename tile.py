@@ -9,9 +9,11 @@ class TileContents:
     sprites = None
 
     def get_image(self):
-        if self.CLEARED:
+        if self.FLAGGED:
+            return TileContents.sprites[-3]
+        elif self.CLEARED:
             return TileContents.sprites[self.VALUE]
-        return TileContents.sprites[-2]
+        return TileContents.sprites[-2]  # Cleared tile
 
     @staticmethod
     def init_sprites():  # cant load images before pygame.init() and the display has been set so this exists
@@ -30,6 +32,9 @@ class TileContents:
             7: pygame.image.load("assets/tile_numbers/tile_7.png").convert(),
             8: pygame.image.load("assets/tile_numbers/tile_8.png").convert()
         }
+
+    def __str__(self):
+        return f"{self.VALUE=} {self.FLAGGED=} {self.CLEARED=}"
 
 
 class Tile:
@@ -53,6 +58,10 @@ class Tile:
 
     def draw(self, screen):
         screen.blit(self.cont.get_image(), self.rect)
+
+    def update_flag_state(self):
+        if not self.cont.CLEARED:
+            self.cont.FLAGGED = not self.cont.FLAGGED
 
     def is_clicked(self, mouse_pos):
         return self.rect.collidepoint(mouse_pos)
