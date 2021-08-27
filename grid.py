@@ -67,9 +67,21 @@ class Grid:
             ]))
         return neighbors
 
+    def fast_clear_around(self, tile):
+        flagged_count = 0
+        for neighbor in self.get_neighbors_of(tile, cardinal_only=False):
+            if neighbor.cont.FLAGGED:
+                flagged_count += 1
+        if flagged_count == tile.get_value():
+            for neighbor in self.get_neighbors_of(tile, cardinal_only=False):
+                if neighbor.get_value() == 0:
+                    self.clear_area(neighbor)
+                neighbor.cont.CLEARED = True
+
     def clear_area(self, initial_tile):
         if initial_tile.get_value() != 0:  # to make sure area clearing doesnt run when a number tile is clicked
             initial_tile.cont.CLEARED = True
+            self.fast_clear_around(initial_tile)
             return
         initial_tile.cont.CLEARED = True
         # breadth algorithm to clear an area
