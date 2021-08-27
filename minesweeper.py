@@ -1,8 +1,9 @@
 import pygame
 import sys
 import config
-from numpy import ndindex as np_iter
-from tile import Tile
+from threading import Thread
+from time import sleep
+from tile import Tile, TileContents
 from grid import Grid
 
 
@@ -11,7 +12,10 @@ class Minesweeper:
     def __init__(self):
 
         pygame.init()
-        self.screen = pygame.display.set_mode(config.resolution.xy)
+        self.screen = pygame.display.set_mode(config.resolution.padded)
+
+        TileContents.init_sprites()  # i dislike having to do this but i cant find a better way
+
         self.clock = pygame.time.Clock()
         self.grid = Grid()
 
@@ -27,7 +31,7 @@ class Minesweeper:
         start_button_rect = pygame.Rect((165, 570), (450, 100))
         menu = True
         while menu:
-            self.clock.tick(20)
+            self.clock.tick(config.fps)
             mouse_pos = pygame.mouse.get_pos()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -44,64 +48,41 @@ class Minesweeper:
                     # print(f"Tile clicked: {tile_clicked.position}")
 
             self.screen.blit(self.menu_screen, (0, 0))
-            if start_button_rect.collidepoint(self.mouse_pos) == 1:
+            if start_button_rect.collidepoint(mouse_pos) == 1:
                 self.screen.blit(self.on_hover, (130, 530))
             self.screen.blit(self.start_button, (165, 570))
             pygame.display.update()
         self.run()
 
     def run(self):
-        self.create_tiles()
+
+        self.grid.new_grid()
 
         while True:
             self.clock.tick(20)
-            self.screen.fill((230, 230, 230))
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    # where all clicking events take place
-                    self.mouse_click_events(event)
-            if self.round_over:
-                self.complete()
-            self.draw_grid()
-            self.draw_stats()
+                self.click_event_handler(event)
+
+            self.draw()
+
             pygame.display.update()
-        self.reset_map()
-        self.run_menu()
 
-    def reset_map(self):
-        self.round_over = False
-        Tile.total_flagged = 0
-        self.initial_mine = True
+    def draw(self):
+        self.screen.fill((230, 230, 230))
+        self.grid.draw(self.screen)
 
-    def mouse_click_events(self, event):
+    def click_event_handler(self, event):
+        buttons_clicked = pygame.mouse.get_pressed(5)
         mouse_pos = pygame.mouse.get_pos()
-        if pygame.mouse.get_pressed(5)[0]: # user drawing cells
-            for x, y in np_iter(self.grid.shape): # iterating using np (gaming)
-                if self.grid.get_tile(x, y).rect.collidepoint(mouse_pos):
-                    self.grid.set_cell(x, y, self.draw_type)
 
-    def create_tiles(self):
-        Tile.tiles = []
-        for x in range(int(self.display_size[0]/self.block_size)):
-            Tile.tiles.append([])
-            for y in range(int(self.display_size[1]/self.block_size)-1):
-                tile = Tile(self.screen, (x*self.block_size, y*self.block_size+50))
-                print(tile.position)
-                Tile.tiles[-1].append(tile)
-
-    def setup_map(self, initial_pos):
-        self.map.lay_mines(initial_pos)
-        self.total_mines = self.map.get_total_mines()
-        self.grid = self.map.get_full_grid()
-        self.set_tile_values()
-
-    def set_tile_values(self):
-        for ix, iy in np_iter(self.grid.grid.shape):
-            tile = Tile.tile_from_position((ix * 50, iy * 50 + 50), (16, 16))
-            tile.value = self.grid[ix][iy]
+        if buttons_clicked[0]:  # Left mouse button
+            tile_clicked = self.grid.get_clicked(mouse_pos)
+            if not self.grid.count <= 0:
+                print("spawning")
+                self.grid.spawn_mines(tile_clicked)
 
     def complete(self):
         for row in Tile.tiles:
@@ -118,7 +99,3 @@ class Minesweeper:
         tct = self.font.render(f"Tile clicked: {self.tc}", True, (255, 0, 0))
         self.screen.blit(tct, (400, 10))
 
-    def draw_grid(self):
-        for x in range(int(self.display_size[0]/self.block_size)):
-            for y in range(int(self.display_size[1]/self.block_size)-1):
-                Tile.tiles[x][y].set((x*self.block_size, y*self.block_size+50))
