@@ -1,16 +1,16 @@
-import numpy as np
 import config
 from tile import Tile, TileContents
-from pygame import draw
 from pygame.rect import Rect
+from random import randint
 
 # minesweeper spawn documentation: https://dspace.cvut.cz/bitstream/handle/10467/68632/F3-BP-2017-Cicvarek-Jan-Algorithms%20for%20Minesweeper%20Game%20Grid%20Generation.pdf
 
 class Grid:
     def __init__(self):
         self.dimensions = config.GameMode.EASY
-        self.count = 40
         self.grid = []
+        self.mine_count = 40
+        self.running = False
 
     def draw(self, screen):
         for x in range(self.dimensions.x):  # row major order
@@ -27,7 +27,7 @@ class Grid:
 
     def get_tile(self, x, y):
         if 0 <= x < self.dimensions.x and 0 <= y < self.dimensions.y:
-            return self.grid[y][x]
+            return self.grid[x][y]
         return None
 
     def new_grid(self):
@@ -45,7 +45,7 @@ class Grid:
                     (x*rect_width + config.padding["LEFT"], y*rect_height + config.padding["TOP"]),
                     (rect_width, rect_height)
                 )
-                tile = Tile(x, y, rect, TileContents(0))
+                tile = Tile(x, y, rect, TileContents(-2))
                 self.grid[x].append(tile)
 
     def get_neighbors_of(self, tile, cardinal_only=True):
@@ -67,27 +67,52 @@ class Grid:
             ]))
         return neighbors
 
-    def bomb(self, spawn_chance):
-        def bias_function(num, bias=0.5):  # https://www.youtube.com/watch?v=lctXaT9pxA0&t=450s
-            k = pow(1 - bias, 3)
-            return (num * k) / (num * k - num + 1)
+    def clear_area(self, initial_tile):
+        if initial_tile.get_value() != 0:
+            initial_tile.cont.CLEARED = True
+            return
+        # breadth algorithm to clear an area
+        frontier = [initial_tile]
+        scanned = set()
+        while len(frontier) != 0:
+            current = frontier.pop(0)
+            for tile in self.get_neighbors_of(current, cardinal_only=False):  # looping through clear tiles
+                if tile.get_value() == 0 and tile not in scanned:
+                    for num_tile in self.get_neighbors_of(tile, cardinal_only=False):
+                        num_tile.cont.CLEARED = True
+                    frontier.append(tile)
+                    scanned.add(tile)
 
+    def gen_values(self):
+        for x in range(self.dimensions.x):
+            for y in range(self.dimensions.y):
+                tile = self.get_tile(x, y)
+                mines_around = 0
+                if not tile.is_mine():
+                    neighbors = self.get_neighbors_of(tile, cardinal_only=False)
+                    for neighbor in neighbors:
+                        if neighbor.is_mine():
+                            mines_around += 1
+                    tile.set_value(mines_around)
 
-    def spawn_mines(self, initial_tile):  # runs breadth algorithm from initial tile mined, each cycle mines get more commonly spawned
+    def fill_grid(self, initial_tile):  # runs breadth algorithm from initial tile mined, each cycle mines get more commonly spawned
 
-        spawn_chance = -8
-        mines_left = self.count
+        spawn_chance = -10
+        mines_left = self.mine_count
         total_tiles = self.dimensions.x * self.dimensions.y
+        tiles_to_mines = int(total_tiles/mines_left)
 
         frontier = [initial_tile]
         scanned = set()
         while len(frontier) != 0:
             current = frontier.pop(0)
             for tile in self.get_neighbors_of(current):
-
-                # do stuff with tile here
-                tile.cont.VALUE = -2
-
-                if tile not in list(scanned):
+                if tile not in scanned:
+                    # Determines whether tile will become a mine
+                    spawn_chance += 1
+                    tile.set_value(-2)
+                    if randint(0, tiles_to_mines) == 1 and spawn_chance > 0:
+                        tile.set_value(-1)
                     frontier.append(tile)
                     scanned.add(tile)
+        self.gen_values()

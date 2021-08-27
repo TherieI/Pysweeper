@@ -5,18 +5,22 @@ from dataclasses import dataclass
 class TileContents:
     VALUE: int
     FLAGGED: bool = False
-    DESTROYED: bool = False
+    CLEARED: bool = False
     sprites = None
 
     def get_image(self):
-        return TileContents.sprites[self.VALUE]
+        if self.CLEARED:
+            return TileContents.sprites[self.VALUE]
+        return TileContents.sprites[-2]
 
     @staticmethod
     def init_sprites():  # cant load images before pygame.init() and the display has been set so this exists
         TileContents.sprites = {
-            -2: pygame.image.load("assets/tile_clear.png").convert(),
+            -3: pygame.image.load("assets/tile_flag.png").convert(),
+            -2: pygame.image.load("assets/tile.png").convert(),
+
             -1: pygame.image.load("assets/bomb.png").convert(),
-            0: pygame.image.load("assets/tile.png").convert(),
+            0: pygame.image.load("assets/tile_clear.png").convert(),
             1: pygame.image.load("assets/tile_numbers/tile_1.png").convert(),
             2: pygame.image.load("assets/tile_numbers/tile_2.png").convert(),
             3: pygame.image.load("assets/tile_numbers/tile_3.png").convert(),
@@ -41,9 +45,18 @@ class Tile:
         self.cont = contents
         self.xy = x, y
 
+    def set_value(self, value):
+        self.cont.VALUE = value
+
+    def get_value(self):
+        return self.cont.VALUE
+
     def draw(self, screen):
         screen.blit(self.cont.get_image(), self.rect)
 
     def is_clicked(self, mouse_pos):
         return self.rect.collidepoint(mouse_pos)
+
+    def is_mine(self):
+        return self.cont.VALUE == -1
 

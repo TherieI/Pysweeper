@@ -80,9 +80,16 @@ class Minesweeper:
 
         if buttons_clicked[0]:  # Left mouse button
             tile_clicked = self.grid.get_clicked(mouse_pos)
-            if not self.grid.count <= 0:
-                print("spawning")
-                self.grid.spawn_mines(tile_clicked)
+            if not self.grid.running:
+                print("troll")
+                self.grid.running = True
+                self.grid.fill_grid(tile_clicked)
+            if not tile_clicked.cont.FLAGGED:
+                self.grid.clear_area(tile_clicked)
+
+        elif buttons_clicked[2]:
+            tile_clicked = self.grid.get_clicked(mouse_pos)
+            print(f"{tile_clicked.xy=} {tile_clicked.get_value()=}")
 
     def complete(self):
         for row in Tile.tiles:
