@@ -1,4 +1,6 @@
-import pygame
+from pygame.image import load
+from pygame.transform import scale
+from config import Dimension
 from dataclasses import dataclass
 
 @dataclass
@@ -6,32 +8,37 @@ class TileContents:
     VALUE: int
     FLAGGED: bool = False
     CLEARED: bool = False
-    sprites = None
+    images = None
 
     def get_image(self):
         if self.FLAGGED:
-            return TileContents.sprites[-3]
+            return TileContents.images[-3]
         elif self.CLEARED:
-            return TileContents.sprites[self.VALUE]
-        return TileContents.sprites[-2]  # Cleared tile
+            return TileContents.images[self.VALUE]
+        return TileContents.images[-2]  # Cleared tile
 
     @staticmethod
-    def init_sprites():  # cant load images before pygame.init() and the display has been set so this exists
-        TileContents.sprites = {
-            -3: pygame.image.load("assets/tile_flag.png").convert(),
-            -2: pygame.image.load("assets/tile.png").convert(),
+    def init_images(game_mode: Dimension):  # initializes the sprites to the correct size for the gamemode
+        TileContents.images = {
+            -3: load("assets/tile_flag.png").convert(),
+            -2: load("assets/tile.png").convert(),
 
-            -1: pygame.image.load("assets/bomb.png").convert(),
-            0: pygame.image.load("assets/tile_clear.png").convert(),
-            1: pygame.image.load("assets/tile_numbers/tile_1.png").convert(),
-            2: pygame.image.load("assets/tile_numbers/tile_2.png").convert(),
-            3: pygame.image.load("assets/tile_numbers/tile_3.png").convert(),
-            4: pygame.image.load("assets/tile_numbers/tile_4.png").convert(),
-            5: pygame.image.load("assets/tile_numbers/tile_5.png").convert(),
-            6: pygame.image.load("assets/tile_numbers/tile_6.png").convert(),
-            7: pygame.image.load("assets/tile_numbers/tile_7.png").convert(),
-            8: pygame.image.load("assets/tile_numbers/tile_8.png").convert()
+            -1: load("assets/bomb.png").convert(),
+            0: load("assets/tile_clear.png").convert(),
+            1: load("assets/tile_numbers/tile_1.png").convert(),
+            2: load("assets/tile_numbers/tile_2.png").convert(),
+            3: load("assets/tile_numbers/tile_3.png").convert(),
+            4: load("assets/tile_numbers/tile_4.png").convert(),
+            5: load("assets/tile_numbers/tile_5.png").convert(),
+            6: load("assets/tile_numbers/tile_6.png").convert(),
+            7: load("assets/tile_numbers/tile_7.png").convert(),
+            8: load("assets/tile_numbers/tile_8.png").convert()
         }
+        constant_x, constant_y = game_mode.x/16, game_mode.y/16
+        for img_id in TileContents.images.keys():
+            img = TileContents.images[img_id]
+            size = int(img.get_width()/constant_x), int(img.get_height()/constant_y)
+            TileContents.images[img_id] = scale(img, size)
 
     def __str__(self):
         return f"{self.VALUE=} {self.FLAGGED=} {self.CLEARED=}"

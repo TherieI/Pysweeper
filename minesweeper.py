@@ -3,7 +3,7 @@ import sys
 import config
 from threading import Thread
 from time import sleep
-from tile import Tile, TileContents
+from tile import Tile
 from grid import Grid
 
 
@@ -14,15 +14,14 @@ class Minesweeper:
         pygame.init()
         self.screen = pygame.display.set_mode(config.resolution.padded)
 
-        TileContents.init_sprites()  # i dislike having to do this but i cant find a better way
-
         self.clock = pygame.time.Clock()
         self.grid = Grid()
 
         pygame.display.set_caption("Minesweeper")
         icon = pygame.image.load("assets/icon.png").convert()
         self.font = pygame.font.SysFont("malgungothic", 24)
-        self.menu_screen = pygame.image.load("assets/minesweepermenu.png").convert()
+        menu_screen = pygame.image.load("assets/minesweepermenu.png").convert()
+        self.menu_screen = pygame.transform.scale(menu_screen, config.resolution.padded)
         self.start_button = pygame.image.load("assets/start_button.png").convert()
         self.on_hover = pygame.image.load("assets/mouse_hover.png")
         pygame.display.set_icon(icon)
@@ -52,19 +51,15 @@ class Minesweeper:
         self.run()
 
     def run(self):
-
         self.grid.new_grid()
-
-        while True:
+        while self.grid.is_alive():
             self.clock.tick(20)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
                 self.click_event_handler(event)
-
             self.draw()
-
             pygame.display.update()
 
     def draw(self):

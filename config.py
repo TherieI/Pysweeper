@@ -1,6 +1,6 @@
 # Display:
 
-padding = {"LEFT": 20, "RIGHT": 20, "TOP": 20, "BOTTOM": 20}  # Left/Right/Top/Bottom
+padding = {"LEFT": 20, "RIGHT": 20, "TOP": 80, "BOTTOM": 20}  # Left/Right/Top/Bottom
 
 class Dimension:
     def __init__(self, x, y):
@@ -12,7 +12,16 @@ class Dimension:
 class GameMode:  # used to determine
     EASY = Dimension(16, 16)
     MEDIUM = Dimension(32, 32)
-    HARD = Dimension(64, 64)
+    HARD = Dimension(48, 48)
+
+    @staticmethod
+    def get_mines_from_difficulty(difficulty: Dimension) -> int:
+        if difficulty == GameMode.EASY:
+            return 40
+        elif difficulty == GameMode.MEDIUM:
+            return 120
+        elif difficulty == GameMode.HARD:
+            return 400
 
 
 resolution = Dimension(800, 800)

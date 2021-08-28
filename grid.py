@@ -7,9 +7,10 @@ from random import randint
 
 class Grid:
     def __init__(self):
-        self.dimensions = config.GameMode.EASY
+        self.dimensions = config.GameMode.EASY  # grid dimensions determine gamemode
+        TileContents.init_images(self.dimensions)  # changing the tile images to match dimension size
+        self.mine_count = config.GameMode.get_mines_from_difficulty(self.dimensions)
         self.grid = []
-        self.mine_count = 40
         self.running = False
 
     def draw(self, screen):
@@ -76,7 +77,8 @@ class Grid:
             for neighbor in self.get_neighbors_of(tile, cardinal_only=False):
                 if neighbor.get_value() == 0:
                     self.clear_area(neighbor)
-                neighbor.cont.CLEARED = True
+                if not neighbor.is_mine():
+                    neighbor.cont.CLEARED = True
 
     def clear_area(self, initial_tile):
         if initial_tile.get_value() != 0:  # to make sure area clearing doesnt run when a number tile is clicked
@@ -94,7 +96,8 @@ class Grid:
             for tile in neighbors:  # looping through clear tiles
                 if tile.get_value() == 0 and tile not in scanned:
                     for num_tile in self.get_neighbors_of(tile, cardinal_only=False):
-                        num_tile.cont.CLEARED = True
+                        if not num_tile.is_mine():
+                            num_tile.cont.CLEARED = True
                     frontier.append(tile)
                     scanned.add(tile)
 
@@ -135,3 +138,11 @@ class Grid:
                     scanned.add(tile)
         print(f"{count=}")
         self.gen_values()
+
+    def is_alive(self) -> bool:
+        for x in range(self.dimensions.x):
+            for y in range(self.dimensions.y):
+                tile = self.get_tile(x, y)
+                if tile.is_mine() and tile.cont.CLEARED:  # tests for a cleared bomb tile
+                    return False
+        return True

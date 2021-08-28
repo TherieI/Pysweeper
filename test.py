@@ -5,4 +5,13 @@ grid_dim = (3, 3)
 
 for x in range(grid_dim[0]):  # row major order
     for y in range(grid_dim[1]):
-        print(f"{grid[x][y]}")
+        pass
+        # print(f"{grid[x][y]}")
+
+coc = {
+    "fart": 10,
+    "yomama": 0
+}
+
+for e in coc.keys():
+    print(type(e))
