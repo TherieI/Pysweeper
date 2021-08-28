@@ -1,8 +1,7 @@
 import pygame
 import sys
 import config
-from threading import Thread
-from time import sleep
+from interface import Interface
 from tile import Tile
 from grid import Grid
 
@@ -17,36 +16,24 @@ class Minesweeper:
         self.clock = pygame.time.Clock()
         self.grid = Grid()
 
-        pygame.display.set_caption("Minesweeper")
-        icon = pygame.image.load("assets/icon.png").convert()
-        self.font = pygame.font.SysFont("malgungothic", 24)
-        menu_screen = pygame.image.load("assets/minesweepermenu.png").convert()
-        self.menu_screen = pygame.transform.scale(menu_screen, config.resolution.padded)
-        self.start_button = pygame.image.load("assets/start_button.png").convert()
-        self.on_hover = pygame.image.load("assets/mouse_hover.png")
-        pygame.display.set_icon(icon)
+        self.interface = Interface()
+        self.interface.load_basic()
 
     def run_menu(self):
-        start_button_rect = pygame.Rect((165, 570), (450, 100))
-        menu = True
-        while menu:
+        running = True
+        while running:
             self.clock.tick(config.fps)
-            mouse_pos = pygame.mouse.get_pos()
             for event in pygame.event.get():
+                mouse_pos = pygame.mouse.get_pos()
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    # where all clicking events take place
-                    left_click = pygame.mouse.get_pressed(num_buttons=5)[0]
-                    button_clicked = start_button_rect.collidepoint(mouse_pos)
-                    if left_click and button_clicked:
-                        menu = False
+                    left_click = pygame.mouse.get_pressed(5)[0]
+                    if left_click and self.interface.menu.button_clicked(mouse_pos):
+                        running = False
 
-            self.screen.blit(self.menu_screen, (0, 0))
-            if start_button_rect.collidepoint(mouse_pos) == 1:
-                self.screen.blit(self.on_hover, (130, 530))
-            self.screen.blit(self.start_button, (165, 570))
+            self.interface.menu.draw(self.screen)
             pygame.display.update()
         self.run()
 
@@ -59,10 +46,10 @@ class Minesweeper:
                     pygame.quit()
                     sys.exit()
                 self.click_event_handler(event)
-            self.draw()
+            self.draw_game()
             pygame.display.update()
 
-    def draw(self):
+    def draw_game(self):
         self.screen.fill((230, 230, 230))
         self.grid.draw(self.screen)
 

@@ -77,7 +77,7 @@ class Grid:
             for neighbor in self.get_neighbors_of(tile, cardinal_only=False):
                 if neighbor.get_value() == 0:
                     self.clear_area(neighbor)
-                if not neighbor.is_mine():
+                if not neighbor.cont.FLAGGED:
                     neighbor.cont.CLEARED = True
 
     def clear_area(self, initial_tile):
