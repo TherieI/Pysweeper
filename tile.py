@@ -47,7 +47,6 @@ class TileContents:
 class Tile:
 
     total_flagged = 0
-    tiles = []
 
     def __init__(self, x, y, rect, contents):
         super().__init__()
@@ -68,6 +67,10 @@ class Tile:
 
     def update_flag_state(self):
         if not self.cont.CLEARED:
+            if self.cont.FLAGGED:
+                Tile.total_flagged -= 1  # unflagging
+            else:
+                Tile.total_flagged += 1  # flagging
             self.cont.FLAGGED = not self.cont.FLAGGED
 
     def is_clicked(self, mouse_pos):

@@ -1,13 +1,13 @@
 import config
 from tile import Tile, TileContents
 from pygame.rect import Rect
-from random import randint
+from random import randint, sample
 
 # minesweeper spawn documentation: https://dspace.cvut.cz/bitstream/handle/10467/68632/F3-BP-2017-Cicvarek-Jan-Algorithms%20for%20Minesweeper%20Game%20Grid%20Generation.pdf
 
 class Grid:
     def __init__(self):
-        self.dimensions = config.GameMode.EASY  # grid dimensions determine gamemode
+        self.dimensions = config.game_mode  # grid dimensions determine gamemode
         TileContents.init_images(self.dimensions)  # changing the tile images to match dimension size
         self.mine_count = config.GameMode.get_mines_from_difficulty(self.dimensions)
         self.grid = []
@@ -75,17 +75,16 @@ class Grid:
                 flagged_count += 1
         if flagged_count == tile.get_value():
             for neighbor in self.get_neighbors_of(tile, cardinal_only=False):
-                if neighbor.get_value() == 0:
-                    self.clear_area(neighbor)
                 if not neighbor.cont.FLAGGED:
                     neighbor.cont.CLEARED = True
+                    if neighbor.get_value() == 0:
+                        self.clear_area(neighbor)
 
     def clear_area(self, initial_tile):
-        if initial_tile.get_value() != 0:  # to make sure area clearing doesnt run when a number tile is clicked
-            initial_tile.cont.CLEARED = True
+        initial_tile.cont.CLEARED = True
+        if initial_tile.get_value() != 0:  # fast clearing (chording https://www.reddit.com/r/Minesweeper/comments/2bdhx7/what_do_you_guys_think_of_the_quick_click_feature/)
             self.fast_clear_around(initial_tile)
             return
-        initial_tile.cont.CLEARED = True
         # breadth algorithm to clear an area
         frontier = [initial_tile]
         scanned = set()
@@ -96,8 +95,7 @@ class Grid:
             for tile in neighbors:  # looping through clear tiles
                 if tile.get_value() == 0 and tile not in scanned:
                     for num_tile in self.get_neighbors_of(tile, cardinal_only=False):
-                        if not num_tile.is_mine():
-                            num_tile.cont.CLEARED = True
+                        num_tile.cont.CLEARED = True
                     frontier.append(tile)
                     scanned.add(tile)
 
@@ -114,13 +112,13 @@ class Grid:
                     tile.set_value(mines_around)
 
     def fill_grid(self, initial_tile):  # runs breadth algorithm from initial tile mined, each cycle mines get more commonly spawned
-
-        spawn_chance = -10
-        mines_left = self.mine_count
+        spawn_radius = 10
         total_tiles = self.dimensions.x * self.dimensions.y
-        tiles_to_mines = int(total_tiles/mines_left)
 
         count = 0
+        mines = [0 for _ in range(0, total_tiles - self.mine_count - spawn_radius)] + [1 for _ in range(0, self.mine_count)]  # generating a list of len(total_tiles) with a gamemode difficulty amount of mines
+        random_mines = [0 for _ in range(0, spawn_radius)] + sample(mines, len(mines))
+        random_mines_index = 0
 
         frontier = [initial_tile]
         scanned = set()
@@ -128,15 +126,14 @@ class Grid:
             current = frontier.pop(0)
             for tile in self.get_neighbors_of(current):
                 if tile not in scanned:
-                    # Determines whether tile will become a mine
-                    spawn_chance += 1
-                    tile.set_value(-2)
-                    if randint(0, tiles_to_mines) == 1 and spawn_chance > 0:
+                    if random_mines[random_mines_index] == 0:  # Determines whether tile will become a mine
+                        tile.set_value(-2)  # blank tile
+                    else:
+                        tile.set_value(-1)  # mine
                         count += 1
-                        tile.set_value(-1)
+                    random_mines_index += 1
                     frontier.append(tile)
                     scanned.add(tile)
-        print(f"{count=}")
         self.gen_values()
 
     def is_alive(self) -> bool:

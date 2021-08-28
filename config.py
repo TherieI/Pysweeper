@@ -29,3 +29,4 @@ resolution = Dimension(800, 800)
 
 # other
 fps = 60
+game_mode = GameMode.EASY
