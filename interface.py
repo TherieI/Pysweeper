@@ -1,3 +1,5 @@
+import time
+
 import config
 import colors
 from tile import Tile
@@ -9,12 +11,15 @@ from pygame.image import load
 from pygame.transform import scale
 from pygame.mouse import get_pos as get_mouse_pos
 from pygame.mouse import get_pressed as mouse_pressed
+from threading import Thread
+from time import sleep
 
 
 class Interface:
     MENU = 0
     GAME = 1
-    END = 2
+    END_W = 2
+    END_L = 3
 
     def __init__(self):
         self.mode = Interface.MENU
@@ -24,6 +29,11 @@ class Interface:
 
     def set_mode(self, mode):
         self.mode = mode
+        if mode == Interface.GAME:
+            self.game.init_timer()
+        elif mode == Interface.END_W or mode == Interface.END_L:
+            self.game.pause_timer()
+            self.end.set_stats(mode, self.game.elapsed)
 
     def load_basic(self):
         set_caption("Pysweeper")
@@ -55,16 +65,39 @@ class Game:
         self.font = SysFont("Courier New", 24)
         self.font.bold = True
 
+        self.elapsed = 0
+        self.count_seconds = True
+
     def draw_stats(self, screen):
-        text = self.font.render(f"Mines: {config.GameMode.get_mines_from_difficulty(config.game_mode) - Tile.total_flagged}", True, colors.DARK_RED)
+        mines_left = self.font.render(f"Mines: {config.GameMode.get_mines_from_difficulty(config.game_mode) - Tile.total_flagged}", True, colors.DARK_RED)
         screen.blit(self.background, (config.padding["LEFT"], 10))
-        screen.blit(text, (config.padding["LEFT"] + 120, 25))
+        screen.blit(mines_left, (config.padding["LEFT"] + 120, 25))
+
+        _time = self.font.render(f"Time: {self.elapsed}s", True, colors.DARK_RED)
+        screen.blit(_time, (config.padding["LEFT"] + config.resolution.x - 280, 25))
+
+    def init_timer(self):
+        self.elapsed = 0
+        self.count_seconds = True
+        timer_thread = Thread(target=self.timer, daemon=True)
+        timer_thread.start()
+
+    def timer(self):
+        while self.count_seconds:
+            sleep(1)
+            self.elapsed += 1
+
+    def pause_timer(self):
+        self.count_seconds = False
 
 
 class GameEnd:
     def __init__(self):
         self.font = SysFont("Courier New", 24)
         self.font.bold = True
+
+        self.end_state = None
+        self.time_elapsed = None
 
         background = load("assets/tile_clear.png").convert()
         self.background = scale(background, config.resolution.padded)
@@ -81,10 +114,20 @@ class GameEnd:
         menu.blit(menu_txt, (0, 0))
         self.btn_menu = Button(menu)
 
+    def set_stats(self, state, elapsed):
+        if state == Interface.END_W:
+            s = "Win"
+        else:
+            s = "Loss"
+        self.end_state = self.font.render(f"{s}", True, colors.DARK_RED)
+        self.time_elapsed = self.font.render(f"Total time: {elapsed}s", True, colors.DARK_RED)
+
     def draw(self, screen):
         screen.blit(self.background, (0, 0))
-        self.btn_retry.draw(screen, (100, 500))
-        self.btn_menu.draw(screen, (400, 500))
+        self.btn_retry.draw(screen, (275, 350))
+        self.btn_menu.draw(screen, (435, 350))
+        screen.blit(self.end_state, (350, 250))
+        screen.blit(self.time_elapsed, (300, 300))
 
 
 class Button(Sprite):

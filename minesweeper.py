@@ -26,7 +26,7 @@ class Minesweeper:
                 self.run_menu()
             elif self.interface.mode == Interface.GAME:
                 self.run_game()
-            elif self.interface.mode == Interface.END:
+            elif self.interface.mode == Interface.END_W or self.interface.mode == Interface.END_L:
                 self.run_end()
             pygame.display.update()
 
@@ -43,11 +43,11 @@ class Minesweeper:
 
     def run_game(self):
         if not self.grid.is_alive():
-            self.interface.set_mode(Interface.END)
+            self.interface.set_mode(Interface.END_L)
             self.grid.running = False
             return
         elif self.grid.has_won():
-            self.interface.set_mode(Interface.END)
+            self.interface.set_mode(Interface.END_W)
             self.grid.running = False
             return
         for event in pygame.event.get():
