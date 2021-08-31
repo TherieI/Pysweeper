@@ -2,12 +2,14 @@
 
 padding = {"LEFT": 20, "RIGHT": 20, "TOP": 80, "BOTTOM": 20}  # Left/Right/Top/Bottom
 
+
 class Dimension:
     def __init__(self, x, y):
         self.x = x
         self.y = y
         self.xy = x, y
         self.padded = padding["LEFT"] + x + padding["RIGHT"], padding["TOP"] + y + padding["BOTTOM"]
+
 
 class GameMode:  # used to determine
     EASY = Dimension(16, 16)

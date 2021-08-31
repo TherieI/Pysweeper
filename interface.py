@@ -2,12 +2,14 @@ import config
 import colors
 from tile import Tile
 from pygame.sprite import Sprite
+from pygame.surface import Surface
 from pygame.display import set_caption, set_icon
 from pygame.font import SysFont
 from pygame.image import load
 from pygame.transform import scale
 from pygame.mouse import get_pos as get_mouse_pos
 from pygame.mouse import get_pressed as mouse_pressed
+
 
 class Interface:
     MENU = 0
@@ -16,8 +18,9 @@ class Interface:
 
     def __init__(self):
         self.mode = Interface.MENU
-        self.menu = Menu()
+        self.menu = GameMenu()
         self.game = Game()
+        self.end = GameEnd()
 
     def set_mode(self, mode):
         self.mode = mode
@@ -27,7 +30,7 @@ class Interface:
         set_icon(load("assets/icon.png").convert())
 
 
-class Menu:
+class GameMenu:
     def __init__(self):
         menu_screen = load("assets/minesweepermenu.png").convert()
         self.menu_screen = scale(menu_screen, config.resolution.padded)
@@ -58,6 +61,32 @@ class Game:
         screen.blit(text, (config.padding["LEFT"] + 120, 25))
 
 
+class GameEnd:
+    def __init__(self):
+        self.font = SysFont("Courier New", 24)
+        self.font.bold = True
+
+        background = load("assets/tile_clear.png").convert()
+        self.background = scale(background, config.resolution.padded)
+
+        retry_txt = self.font.render(f"Retry", True, colors.DARK_RED)
+        retry = Surface((100, 50))
+        retry.fill(colors.DARK_GREY)
+        retry.blit(retry_txt, (0, 0))
+        self.btn_retry = Button(retry)
+
+        menu_txt = self.font.render(f"Menu", True, colors.DARK_RED)
+        menu = Surface((100, 50))
+        menu.fill(colors.DARK_GREY)
+        menu.blit(menu_txt, (0, 0))
+        self.btn_menu = Button(menu)
+
+    def draw(self, screen):
+        screen.blit(self.background, (0, 0))
+        self.btn_retry.draw(screen, (100, 500))
+        self.btn_menu.draw(screen, (400, 500))
+
+
 class Button(Sprite):
     def __init__(self, image):
         super().__init__()
@@ -73,10 +102,3 @@ class Button(Sprite):
 
     def is_clicked(self):
         return self.rect.collidepoint(get_mouse_pos()) and mouse_pressed(num_buttons=5)[0]  # LMB
-
-
-
-
-
-
-

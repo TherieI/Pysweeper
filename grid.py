@@ -32,6 +32,9 @@ class Grid:
         return None
 
     def new_grid(self):
+        # Testing for new gamemode changes
+        self.dimensions = config.game_mode
+        self.mine_count = config.GameMode.get_mines_from_difficulty(self.dimensions)
         #  Tile dimensions
         rect_width, rect_height = (
             int(config.resolution.x/self.dimensions.x),
@@ -140,6 +143,15 @@ class Grid:
         for x in range(self.dimensions.x):
             for y in range(self.dimensions.y):
                 tile = self.get_tile(x, y)
-                if tile.is_mine() and tile.cont.CLEARED:  # tests for a cleared bomb tile
+                if tile.is_mine() and tile.cont.CLEARED and self.running:  # tests for a cleared bomb tile
                     return False
         return True
+
+    def has_won(self) -> bool:
+        tiles_mined = 0
+        for x in range(self.dimensions.x):
+            for y in range(self.dimensions.y):
+                tile = self.get_tile(x, y)
+                if not tile.is_mine() and tile.cont.CLEARED:
+                    tiles_mined += 1
+        return self.dimensions.x * self.dimensions.y - tiles_mined == self.mine_count

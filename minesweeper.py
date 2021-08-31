@@ -37,11 +37,16 @@ class Minesweeper:
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN and self.interface.menu.start_button.is_clicked():
                 self.interface.set_mode(Interface.GAME)
+                self.grid.new_grid()
                 return
         self.interface.menu.draw(self.screen)
 
     def run_game(self):
         if not self.grid.is_alive():
+            self.interface.set_mode(Interface.END)
+            self.grid.running = False
+            return
+        elif self.grid.has_won():
             self.interface.set_mode(Interface.END)
             self.grid.running = False
             return
@@ -53,7 +58,17 @@ class Minesweeper:
         self.draw_game()
 
     def run_end(self):
-        pass
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if self.interface.end.btn_retry.is_clicked():
+                    self.interface.set_mode(Interface.GAME)
+                    self.grid.new_grid()
+                elif self.interface.end.btn_menu.is_clicked():
+                    self.interface.set_mode(Interface.MENU)
+        self.interface.end.draw(self.screen)
 
     def draw_game(self):
         self.screen.fill(colors.GREY)
@@ -71,10 +86,8 @@ class Minesweeper:
                 if not tile_clicked.cont.FLAGGED:
                     if not self.grid.running:  # INITIAL CLICK (SPAWNS MINES)
                         self.grid.running = True
-                        self.grid.new_grid()
                         self.grid.fill_grid(tile_clicked)
                         Tile.total_flagged = 0
-                        tile_clicked = self.grid.get_tile(*tile_clicked.xy)  # with the instantiation of a new grid, we must re-get the current tile_clicked
                     self.grid.clear_area(tile_clicked)
             elif buttons_clicked[2]:  # Right mouse button
                 tile_clicked.update_flag_state()
